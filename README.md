@@ -40,3 +40,22 @@ Minimal Facebook Messenger webhook with signature verification and echo reply.
 ## Files
 - `src/server.ts` - Express server, verification, event handling
 - `src/social/facebook.ts` - Graph API client for sending messages
+
+## Deploy to Vercel
+1. Create or select a Vercel project and link this repo.
+2. In Vercel Project Settings → Environment Variables, add:
+   - `OPENAI_API_KEY`
+   - `PAGE_ACCESS_TOKEN`
+   - `VERIFY_TOKEN`
+   - `APP_SECRET`
+3. Deploy. The following endpoints will be available:
+   - Health: `https://<your-vercel-domain>/`
+   - Webhook (Meta): `https://<your-vercel-domain>/webhook`
+4. In your Meta App (Messenger → Settings), configure:
+   - Callback URL: `https://<your-vercel-domain>/webhook`
+   - Verify Token: the same as `VERIFY_TOKEN`
+   - Subscribe to events: messages, messaging_postbacks
+5. Notes
+   - The Vercel runtime is set to Node 20 via `vercel.json`.
+   - Local `.env` is not used on Vercel; set env vars in the dashboard.
+
