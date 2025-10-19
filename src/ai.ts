@@ -27,8 +27,6 @@ export async function generateAiReply(userMessageText: string): Promise<string> 
 
   const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
-    temperature: 0.3,
-    max_tokens: 300,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: safeUser }

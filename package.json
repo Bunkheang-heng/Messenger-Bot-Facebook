@@ -14,12 +14,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google-cloud/aiplatform": "^5.9.0",
+    "@supabase/supabase-js": "^2.75.1",
     "axios": "^1.12.2",
     "compression": "^1.8.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "openai": "^6.0.1"
+    "openai": "^6.0.1",
+    "typecheck": "^0.1.2"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",

@@ -3,8 +3,9 @@ dotenv.config();
 
 import express, { type Request, type Response } from 'express';
 import crypto from 'crypto';
-import { sendTextMessage } from './social/facebook';
+import { sendTextMessage, extractImageAttachments, type MessengerMessage } from './social/facebook';
 import { generateAiReply } from './ai';
+import { searchByImage, formatSearchResults } from './search/semantic';
 import helmet from 'helmet';
 import compression from 'compression';
 
@@ -96,19 +97,51 @@ app.post('/webhook', (req: Request & { rawBody?: Buffer }, res: Response) => {
   for (const entry of body.entry ?? []) {
     for (const event of entry.messaging ?? []) {
       const senderId = event.sender?.id;
-      const messageText: string | undefined = event.message?.text;
-      const mid: string | undefined = event.message?.mid;
+      const message: MessengerMessage | undefined = event.message;
+      const mid: string | undefined = message?.mid;
+      
       if (mid) {
         if (seenMids.has(mid)) {
           continue;
         }
         seenMids.add(mid);
       }
-      if (senderId && typeof messageText === 'string' && messageText.trim().length > 0) {
-        if (!allowEventForUser(senderId)) {
+      
+      if (!senderId || !message) {
+        continue;
+      }
+      
+      if (!allowEventForUser(senderId)) {
+        continue;
+      }
+      
+      // Check for image attachments first
+      const imageAttachments = extractImageAttachments(message);
+      
+      if (imageAttachments.length > 0) {
+        // Handle image upload - perform semantic search
+        const firstImage = imageAttachments[0];
+        if (!firstImage) {
           continue;
         }
-        const clipped = messageText.trim().slice(0, MAX_MESSAGE_CHARS);
+        const imageUrl = firstImage.url; // Process first image
+        
+        searchByImage(imageUrl, 5, 0.5)
+          .then((results) => {
+            const reply = formatSearchResults(results);
+            return sendTextMessage(PAGE_ACCESS_TOKEN!, senderId, reply);
+          })
+          .catch((err) => {
+            console.error('Failed to perform image search', err?.response?.data ?? err);
+            sendTextMessage(
+              PAGE_ACCESS_TOKEN!,
+              senderId,
+              "Sorry, I couldn't process your image. Please try again or send a text message."
+            ).catch(console.error);
+          });
+      } else if (typeof message.text === 'string' && message.text.trim().length > 0) {
+        // Handle text message with AI
+        const clipped = message.text.trim().slice(0, MAX_MESSAGE_CHARS);
         generateAiReply(clipped)
           .then((reply) => {
             return sendTextMessage(PAGE_ACCESS_TOKEN!, senderId, reply);

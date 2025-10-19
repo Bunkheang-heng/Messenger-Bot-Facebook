@@ -1,6 +1,22 @@
 import axios from 'axios';
 import crypto from 'crypto';
 
+export interface ImageAttachment {
+  url: string;
+  type: 'image';
+}
+
+export interface MessengerMessage {
+  mid: string;
+  text?: string;
+  attachments?: Array<{
+    type: string;
+    payload: {
+      url?: string;
+    };
+  }>;
+}
+
 export async function sendTextMessage(
   pageAccessToken: string,
   recipientPsid: string,
@@ -43,6 +59,28 @@ export async function sendTextMessage(
       await new Promise((r) => setTimeout(r, delay));
     }
   }
+}
+
+/**
+ * Extract image attachments from a Messenger message
+ */
+export function extractImageAttachments(message: MessengerMessage): ImageAttachment[] {
+  if (!message.attachments || message.attachments.length === 0) {
+    return [];
+  }
+  
+  const images: ImageAttachment[] = [];
+  
+  for (const attachment of message.attachments) {
+    if (attachment.type === 'image' && attachment.payload?.url) {
+      images.push({
+        url: attachment.payload.url,
+        type: 'image'
+      });
+    }
+  }
+  
+  return images;
 }
 
 
